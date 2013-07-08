@@ -7,7 +7,7 @@
 
 module XKeys; end
 
-# Extended fetch and get ([]) interfaces
+# Extended fetch and get ([])
 module XKeys::Get
 
     # Perform an extended fetch using successive keys to traverse a tree
@@ -58,68 +58,65 @@ module XKeys::Get
 
 end
 
-# Extended set ([]=) hash keys interface
-# (nil keys auto-vivify arrays but integer keys auto-vivify hashes)
-module XKeys::Set_Hash
+module XKeys::Set_
 
-    # Auto-vivify nested hash trees using extended hash key/array index
-    # assignment syntax.
-    def []= (*args)
+    # Common code for XKeys::Set_Hash and XKeys::Set_Auto
+    def _xset (*args)
 	if args.count == 2
 	    if self.is_a?(Array) && args[0] == nil
 		self << args[1]		# array[nil] = value
-	    else super *args		# [key] = value
+	    else return false		# [key] = value ==> super *args
 	    end
 	else
-	    # tree[key1, ..., keyN] = value
+	    # root[key1, ..., keyN] = value
 	    (node, key) = args[1..-2].inject([self, args[0]]) do |node, key|
-		if key == nil
+		if yield key
 		    node[0][node[1]] ||= []
-		    [node[0][node[1]], node[0][node[1]].count]
+		    [node[0][node[1]], key || node[0][node[1]].size]
 		else
 		    node[0][node[1]] ||= {}
 		    [node[0][node[1]], key]
 		end
 	    end
-	    if key == nil then node << args[-1]
+	    if yield key then node[key || node.size] = args[-1]
 	    else node[key] = args[-1]
 	    end
 	end
+	true
+    end
+
+end
+
+# Extended set ([]=) with hash keys
+module XKeys::Set_Hash
+    include XKeys::Set_
+
+    # Auto-vivify nested hash trees using extended hash key/array index
+    # assignment syntax. Nil keys create nested arrays as needed. Other
+    # keys, including integer keys, create nested hashes as needed.
+    #
+    # root[key1, ..., keyN] = value
+    def []= (*args)
+	super *args unless _xset(*args) { |key| key == nil }
 	args[-1]
     end
 
 end
 
-# Extended set ([]=) hash keys or array indexes interface
-# (nil keys and integer keys auto-vivify arrays)
+# Extended set ([]=) with automatic selection of hash keys or array indexes
 module XKeys::Set_Auto
+    include XKeys::Set_
 
     # Auto-vivify nested hash and/or array trees using extended hash
-    # key/array index assignment syntax.
+    # key/array index assignment syntax. Nil keys and integer keys
+    # created nested arrays as needed. Other keys create nested hashes
+    # as needed.
+    #
+    # root[key1, ..., keyN] = value
     def []= (*args)
-	if args.count == 2
-	    if self.is_a?(Array) && args[0] == nil
-		self << args[1]		# array[nil] = value
-	    else super *args		# [key] = value
-	    end
-	else
-	    # tree[key1, ..., keyN] = value syntax
-	    # (method call []=(key1, ..., keyN, value))
-	    (node, key) = args[1..-2].inject([self, args[0]]) do |node, key|
-		if key == nil || key.is_a?(Integer)
-		    node[0][node[1]] ||= []
-		    [node[0][node[1]], key || node[0][node[1]].count]
-		else
-		    node[0][node[1]] ||= {}
-		    [node[0][node[1]], key]
-		end
-	    end
-	    if key == nil || key.is_a?(Integer)
-		node[key || node.count] = args[-1]
-	    else node[key] = args[-1]
-	    end
-	    args[-1]
-	end
+	super *args unless
+	  _xset(*args) { |key| key == nil || key.is_a?(Integer) }
+	args[-1]
     end
 
 end
