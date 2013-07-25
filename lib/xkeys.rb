@@ -3,11 +3,25 @@
 #
 # Synopsis:
 #  root = {}.extend XKeys::Hash
-#  root = [].extend XKeys::Auto
+#  root[:my, :list, nil] = 'value 1'
+#  root[:my, :list, nil] = 'value 2'
+#  root[:sparse, 10] = 'value 3'
+#  # => { :my => { :list => [ 'value 1', 'value 2' ] },
+#  #    :sparse => { 10 => 'value 3' } }
+#  root[:missing] # => nil
+#  root[:missing, :else => false] # => false
+#  root[:missing, {}] # => raises KeyError
 #
-# Author:: Brian Katzung <briank@kappacs.com>, Kappa Computer Solutions, LLC
-# Copyright:: 2013 Brian Katzung and Kappa Computer Solutions, LLC
-# License:: MIT License
+#  root = [].extend XKeys::Auto
+#  root[1, nil] = 'value 1'
+#  root[1, 3] = 'value 2'
+#  # => [ nil, [ 'value 1', nil, nil, 'value 2' ] ]
+#  root[0, 1] # => [ nil ] (slice of length 1 at 0)
+#  root[nil, 1, 0] # => 'value 1'
+#
+# @author Brian Katzung <briank@kappacs.com>, Kappa Computer Solutions, LLC
+# @copyright 2013 Brian Katzung and Kappa Computer Solutions, LLC
+# @license MIT License
 
 module XKeys; end
 
@@ -114,7 +128,7 @@ module XKeys::Set_Auto
 
     # Auto-vivify nested hash and/or array trees using extended hash
     # key/array index assignment syntax. Nil keys and integer keys
-    # created nested arrays as needed. Other keys create nested hashes
+    # create nested arrays as needed. Other keys create nested hashes
     # as needed.
     #
     #   root[key1, ..., keyN] = value

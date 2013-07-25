@@ -1,0 +1,5 @@
+2013-07-08 Version 0.0.2
+	Packaging and documentation cleanup.
+
+2013-07-08 Version 0.0.1
+	First release.
