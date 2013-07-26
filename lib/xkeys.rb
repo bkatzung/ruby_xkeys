@@ -3,21 +3,22 @@
 #
 # Synopsis:
 #  root = {}.extend XKeys::Hash
-#  root[:my, :list, nil] = 'value 1'
-#  root[:my, :list, nil] = 'value 2'
+#  root[:my, :list, :[]] = 'value 1'
+#  root[:my, :list, :[]] = 'value 2'
 #  root[:sparse, 10] = 'value 3'
 #  # => { :my => { :list => [ 'value 1', 'value 2' ] },
 #  #    :sparse => { 10 => 'value 3' } }
 #  root[:missing] # => nil
 #  root[:missing, :else => false] # => false
-#  root[:missing, {}] # => raises KeyError
+#  root[:missing, :raise => true] # => raises KeyError
 #
 #  root = [].extend XKeys::Auto
-#  root[1, nil] = 'value 1'
+#  root[1, :[]] = 'value 1'
 #  root[1, 3] = 'value 2'
 #  # => [ nil, [ 'value 1', nil, nil, 'value 2' ] ]
 #  root[0, 1] # => [ nil ] (slice of length 1 at 0)
-#  root[nil, 1, 0] # => 'value 1'
+#  root[1, 0, {}] # => 'value 1'
+#  root[1, 4, {}] # => nil
 #
 # @author Brian Katzung <briank@kappacs.com>, Kappa Computer Solutions, LLC
 # @copyright 2013 Brian Katzung and Kappa Computer Solutions, LLC
@@ -31,21 +32,35 @@ module XKeys::Get
     # Perform an extended fetch using successive keys to traverse a tree
     # of nested hashes and/or arrays.
     #
-    #   xfetch([nil,] key1, ..., keyN [, :else => default_value])
+    #   xfetch(key1, ..., keyN [, option_hash])
     #
-    #   An optional leading nil key is ignored (see []). If the specified
-    #   keys do not exist, the default value is returned (if provided) or
-    #   the standard exception (e.g. KeyError or IndexError) is raised.
+    #   Options:
+    #
+    #   :else => default value
+    #       The default value to return if the specified keys do not exist.
+    #       The :raise option takes precedence.
+    #
+    #   :raise => true
+    #       Raise a KeyError or IndexError if the specified keys do not
+    #       exist. This is the default behavior for xfetch in the absence
+    #       of an :else option.
+    #
+    #   :raise => *parameters
+    #       Like :raise => true but does raise *parameters instead, e.g.
+    #       :raise => RuntimeError or :raise => [RuntimeError, 'SNAFU']
     def xfetch (*args)
 	if args[-1].is_a?(Hash) then options, last = args[-1], -2
 	else options, last = {}, -1
 	end
-	first = (args[0] == nil) ? 1 : 0
-	args[first..last].inject(self) do |node, key|
+	args[0..last].inject(self) do |node, key|
 	    begin node.fetch key
 	    rescue KeyError, IndexError
-		return options[:else] if options.has_key? :else
-		raise
+		if options[:raise] and options[:raise] != true
+		    raise *options[:raise]
+		elsif options[:raise] or !options.has_key? :else
+		    raise
+		else return options[:else]
+		end
 	    end
 	end
     end
@@ -57,20 +72,26 @@ module XKeys::Get
     #   as normal.
     #
     #   array[int1, int2] returns a length-based array slice as normal.
-    #   Prepend a nil key and/or append an option hash to force nested index
-    #   behavior for two integer array indexes: array[nil, index1, index2].
+    #   Append an option hash to force nested index behavior for two
+    #   integer array indexes: array[index1, index2, {}].
     #
-    #   [[nil,] key1, ..., keyN[, option_hash]] traverses a tree of nested
-    #   hashes and/or arrays using xfetch. The optional leading nil key is
-    #   always ignored. In the absence of an option hash, the default is
-    #   :else => nil.
+    #   [key1, ..., keyN[, option_hash]] traverses a tree of nested
+    #   hashes and/or arrays using xfetch.
+    #
+    #   Option :else => nil is used if no :else option is supplied.
+    #   See xfetch for option details.
     def [] (*args)
-	if args.count == 1 || (self.is_a?(Array) && args.count == 2 &&
-	  args[0].is_a?(Integer) && args[1].is_a?(Integer))
+	if args.count == 1 or (self.is_a?(Array) and args.count == 2 and
+	  args[0].is_a?(Integer) and args[1].is_a?(Integer))
 	    # [key] or array[start, length]
 	    super *args
-	elsif args[-1].is_a?(Hash) then xfetch(*args)
-	else xfetch(*args, :else => nil)
+	else
+	    def_opts = { :else => nil } # Default options
+	    if args[-1].is_a? Hash
+		options, last = def_opts.merge(args[-1]), -2
+	    else options, last = def_opts, -1
+	    end
+	    xfetch *args[0..last], options
 	end
     end
 
@@ -79,25 +100,42 @@ end
 # "Private" module for XKeys::Set_* common code
 module XKeys::Set_
 
-    # Common code for XKeys::Set_Hash and XKeys::Set_Auto
+    # Common code for XKeys::Set_Hash and XKeys::Set_Auto. This method
+    # returns true if it is handling the set, or false if super should
+    # handle the set.
+    #
+    #  _xset(key1, ..., keyN[, options_hash], value) { |key, options| block }
+    #
+    #  The block should return true to auto-vivify an array or false to
+    #  auto-vivify a hash.
+    #
+    #  Options:
+    #
+    #  :[] => false
+    #      Disable :[] auto-indexing
     def _xset (*args)
-	if args.count == 2
-	    if self.is_a?(Array) && args[0] == nil
-		self << args[1]		# array[nil] = value
-	    else return false		# [key] = value ==> super *args
+	if args[-2].is_a?(Hash) then options, last = args[-2], -3
+	else options, last = {}, -2
+	end
+	if args.count + last == 0
+	    if self.is_a?(Array) && args[0] == :[]
+		self << args[-1]	# array[:[]] = value
+	    else return false		# [key] = value ==> super
 	    end
 	else
-	    # root[key1, ..., keyN] = value
-	    (node, key) = args[1..-2].inject([self, args[0]]) do |node, key|
-		if yield key
+	    # root[key1, ..., keyN[, option_hash]] = value
+	    (node, key) = args[1..last].inject([self, args[0]]) do |node, key|
+		if yield key, options
 		    node[0][node[1]] ||= []
-		    [node[0][node[1]], key || node[0][node[1]].size]
+		    [node[0][node[1]], (key != :[]) ? key :
+		      node[0][node[1]].size]
 		else
 		    node[0][node[1]] ||= {}
 		    [node[0][node[1]], key]
 		end
 	    end
-	    if yield key then node[key || node.size] = args[-1]
+	    if yield key, options
+		node[(key != :[])? key : node.size] = args[-1]
 	    else node[key] = args[-1]
 	    end
 	end
@@ -111,12 +149,14 @@ module XKeys::Set_Hash
     include XKeys::Set_
 
     # Auto-vivify nested hash trees using extended hash key/array index
-    # assignment syntax. Nil keys create nested arrays as needed. Other
+    # assignment syntax. :[] keys create nested arrays as needed. Other
     # keys, including integer keys, create nested hashes as needed.
     #
-    #   root[key1, ..., keyN] = value
+    #   root[key1, ..., keyN[, options_hash]] = value
     def []= (*args)
-	super *args unless _xset(*args) { |key| key == nil }
+	super args[0], args[-1] unless _xset(*args) do |key, opts|
+	  key == :[] and opts[:[]] != false
+	end
 	args[-1]
     end
 
@@ -127,14 +167,15 @@ module XKeys::Set_Auto
     include XKeys::Set_
 
     # Auto-vivify nested hash and/or array trees using extended hash
-    # key/array index assignment syntax. Nil keys and integer keys
+    # key/array index assignment syntax. :[] keys and integer keys
     # create nested arrays as needed. Other keys create nested hashes
     # as needed.
     #
-    #   root[key1, ..., keyN] = value
+    #   root[key1, ..., keyN[, options_hash]] = value
     def []= (*args)
-	super *args unless
-	  _xset(*args) { |key| key == nil || key.is_a?(Integer) }
+	super args[0], args[-1] unless _xset(*args) do |key, opts|
+	    (key == :[] and opts[:[]] != false) or key.is_a?(Integer)
+	end
 	args[-1]
     end
 

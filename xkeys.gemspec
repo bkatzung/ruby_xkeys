@@ -1,7 +1,7 @@
 Gem::Specification.new do |s|
   s.name         = "xkeys"
-  s.version      = "0.0.2"
-  s.date         = "2013-07-08"
+  s.version      = "1.0.1"
+  s.date         = "2013-07-25"
   s.authors      = ["Brian Katzung"]
   s.email        = ["briank@kappacs.com"]
   s.homepage     = "http://rubygems.org/gems/xkeys"
@@ -9,7 +9,8 @@ Gem::Specification.new do |s|
   s.description  = "Extended keys to facilitate fetching and storing in nested hash and array structures with Perl-ish auto-vivification."
   s.license      = "MIT"
  
-  s.files        = Dir.glob("lib/**/*") + %w{xkeys.gemspec HISTORY.txt}
+  s.files        = Dir.glob("lib/**/*") +
+  		   %w{xkeys.gemspec .yardopts HISTORY.txt}
   s.test_files   = Dir.glob("test/**/*.rb")
   s.require_path = 'lib'
 end

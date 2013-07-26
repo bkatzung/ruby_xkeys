@@ -24,7 +24,15 @@ class TestXK < MiniTest::Unit::TestCase
 
 	assert_equal(false, h[:b, :d, :else=>false], 'h[:b, :d, :else=>false]')
 	assert_equal(nil, h[:b, :d], 'h[:b, :d]')
-	assert_raises(KeyError, 'h[:b, :d, {}]') { h[:b, :d, {}] }
+	assert_raises(KeyError, 'h[:b, :d, {:raise=>true}]') do
+	    h[:b, :d, {:raise=>true}]
+	end
+	assert_raises(RuntimeError, 'h[:b, :d, {:raise=>RuntimeError}]') do
+	    h[:b, :d, {:raise=>RuntimeError}]
+	end
+	assert_raises(RuntimeError, 'h[:b, :d, {:raise=>[RuntimeError]}]') do
+	    h[:b, :d, {:raise=>[RuntimeError]}]
+	end
     end
 
     def test_array_get
@@ -35,7 +43,6 @@ class TestXK < MiniTest::Unit::TestCase
 
 	assert_equal('0', a.xfetch(0), 'a.xfetch 0')
 	assert_equal('1.0', a.xfetch(1, 0), 'a.xfetch 1, 0')
-	assert_equal('1.0', a.xfetch(nil, 1, 0), 'a.xfetch nil, 1, 0')
 	assert_equal('1.0', a.xfetch(1, 0, {}), 'a.xfetch 1, 0, {}')
 	assert_equal('2.1.1', a.xfetch(2, 1, 1), 'a.xfetch 2, 1, 1')
 
@@ -45,14 +52,14 @@ class TestXK < MiniTest::Unit::TestCase
 
 	assert_equal('0', a[0], 'a[0]')
 	assert_equal([['1.0']], a[1, 1], 'a[1, 1]')
-	assert_equal('1.0', a[nil, 1, 0], 'a[nil, 1, 0]')
 	assert_equal('1.0', a[1, 0, {}], 'a[1, 0, {}]')
-	assert_equal('1.0', a[nil, 1, 0, {}], 'a[nil, 1, 0, {}]')
 	assert_equal('2.1.1', a[2, 1, 1], 'a[2, 1, 1]')
 
 	assert_equal(false, a[1, 1, :else=>false], 'a[1, 1, :else=>false]')
-	assert_equal(nil, a[nil, 1, 1], 'a[nil, 1, 1]')
-	assert_raises(IndexError, 'a[1, 1, {}]') { a[1, 1, {}] }
+	assert_equal(nil, a[1, 1, {}], 'a[1, 1, {}]')
+	assert_raises(IndexError, 'a[1, 1, {:raise=>true}]') do
+	    a[1, 1, {:raise=>true}]
+	end
     end
 
 end

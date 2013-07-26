@@ -31,6 +31,9 @@ class TestXK < MiniTest::Unit::TestCase
 
 	a.clear; a[0, 1] = '01'
 	assert_equal([ [ nil, '01' ] ], a, "a[0, 1] = '01'")
+
+	a[0, :[]] = '02'
+	assert_equal([ [ nil, '01', '02' ] ], a, "a[0, :[]] = '02'")
     end
 
 end

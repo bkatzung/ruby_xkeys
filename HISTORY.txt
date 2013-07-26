@@ -1,3 +1,27 @@
+2013-07-25 Version 1.0.1
+	The auto-indexing array key for set has been changed from nil to
+	:[] in order to support nil keys (e.g. in case a NULL value from a
+	database field is being used as a nil key).
+
+	Get and set now have compatible syntax so that you can use ||=:
+	root[key1, ..., keyN[, option_hash]]
+	root[key1, ..., keyN[, option_hash]] = value
+
+	root = {}.extend XKeys::Hash
+	root[:top, :[], :[] => false] ||= 'just because'
+	# root => { :top => { :[] => 'just because' } }
+
+	Note that a leading nil is no longer ignored on get. Use
+	array[int1, int2, {}] to avoid array[start, length] slice
+	interpretation.
+
+	Option :raise => true raises a KeyError or IndexError on a missing
+	value. Option :raise => *parameters raises the specified exception,
+	e.g. :raise => RuntimeError or :raise => [RuntimeError, 'SNAFU'].
+
+	The :else option defaults to nil on get. Use :raise to force an
+	exception.
+
 2013-07-08 Version 0.0.2
 	Packaging and documentation cleanup.
 

@@ -23,8 +23,11 @@ class TestXK < MiniTest::Unit::TestCase
 
 	assert_respond_to(a, :[]=)
 
-	a[0] = '0'
-	assert_equal(['0'], a, "a[0] = '0'")
+	a[0] = ?0
+	assert_equal([?0], a, "a[0] = ?0")
+
+	a[:[]] = ?1
+	assert_equal([?0, ?1], a, "a[:[]] = ?1")
 
 	a.clear; a[0, :a] = '0:a'
 	assert_equal([ { :a => '0:a' } ], a, "a[0, :a] = '0:a'")
