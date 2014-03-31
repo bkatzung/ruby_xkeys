@@ -1,7 +1,7 @@
 require 'minitest/autorun'
 require 'xkeys'
 
-class TestXK < MiniTest::Unit::TestCase
+class TestXK_03 < MiniTest::Unit::TestCase
 
     def test_hash_set_auto
 	h = {}.extend XKeys::Set_Auto
@@ -34,6 +34,9 @@ class TestXK < MiniTest::Unit::TestCase
 
 	a[0, :[]] = '02'
 	assert_equal([ [ nil, '01', '02' ] ], a, "a[0, :[]] = '02'")
+
+	a.clear; a[0] = ?0; a[:[], 1] = ?1;
+	assert_equal([ ?0, [ nil, ?1 ] ], a, "a[:[], 1]")
     end
 
 end

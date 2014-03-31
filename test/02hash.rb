@@ -1,7 +1,7 @@
 require 'minitest/autorun'
 require 'xkeys'
 
-class TestXK < MiniTest::Unit::TestCase
+class TestXK_02 < MiniTest::Unit::TestCase
 
     def test_hash_set_hash
 	h = {}.extend XKeys::Set_Hash

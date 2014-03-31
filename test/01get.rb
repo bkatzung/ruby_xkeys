@@ -1,7 +1,7 @@
 require 'minitest/autorun'
 require 'xkeys'
 
-class TestXK < MiniTest::Unit::TestCase
+class TestXK_01 < MiniTest::Unit::TestCase
 
     def test_hash_get
 	h = { :a => 'a', :b => { :c => 'bc' },
