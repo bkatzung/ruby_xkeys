@@ -1,3 +1,9 @@
+2014-04-16 Version 2.0.1
+
+	Added documentation to the module overview specifying the
+	requirements for supporting alternate underlying data types
+	(i.e. other than Array or Hash). No other changes.
+
 2014-03-21 Version 2.0.0
 
 	XKeys can now be used with data types other than array or hash

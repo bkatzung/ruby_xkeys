@@ -20,10 +20,14 @@
 #  root[1, 0, {}] # => 'value 1'
 #  root[1, 4, {}] # => nil
 #
-# As of version 2, other types with array- or hash-like behavior are
+# As of version 2.0.0, other types with array- or hash-like behavior are
 # supported as well.
 #
-# Version 2.0.0 2014-03-21
+# As of version 2.0.0, underlying types must implement #[], #[]=, and
+# #fetch to be supported (see the Array or Hash class documentation).
+# They must also implement #push if you want to use push mode (index ":[]").
+#
+# Version 2.0.1 2014-04-16
 #
 # @author Brian Katzung <briank@kappacs.com>, Kappa Computer Solutions, LLC
 # @copyright 2013-2014 Brian Katzung and Kappa Computer Solutions, LLC
