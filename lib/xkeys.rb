@@ -27,7 +27,10 @@
 # #fetch to be supported (see the Array or Hash class documentation).
 # They must also implement #push if you want to use push mode (index ":[]").
 #
-# Version 2.0.1 2014-04-16
+# As of version 2.1.0, #[] is used if #fetch is not supported. Missing-key
+# detection (still) depends on KeyError or IndexError being raised.
+#
+# Version 2.1.0 2014-05-06
 #
 # @author Brian Katzung <briank@kappacs.com>, Kappa Computer Solutions, LLC
 # @copyright 2013-2014 Brian Katzung and Kappa Computer Solutions, LLC
@@ -64,7 +67,7 @@ module XKeys::Get
 	end
 
 	args[0..last].inject(self) do |node, key|
-	    begin node.fetch key
+	    begin node.respond_to?(:fetch) ? node.fetch(key) : node[key]
 	    rescue KeyError, IndexError
 		if options[:raise] && options[:raise] != true
 		    raise *options[:raise]
