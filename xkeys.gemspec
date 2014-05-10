@@ -1,7 +1,7 @@
 Gem::Specification.new do |s|
   s.name         = "xkeys"
-  s.version      = "2.1.0"
-  s.date         = "2014-05-06"
+  s.version      = "2.2.0"
+  s.date         = "2014-05-07"
   s.authors      = ["Brian Katzung"]
   s.email        = ["briank@kappacs.com"]
   s.homepage     = "http://rubygems.org/gems/xkeys"

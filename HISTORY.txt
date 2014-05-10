@@ -1,3 +1,8 @@
+2014-05-07 Version 2.2.0
+
+	Added support for the #xkeys_on_final callback when setting the
+	value in the final (leaf) node.
+
 2014-05-06 Version 2.1.0
 
 	Now works with underlying types that support #[] but not #fetch.

@@ -20,17 +20,14 @@
 #  root[1, 0, {}] # => 'value 1'
 #  root[1, 4, {}] # => nil
 #
-# As of version 2.0.0, other types with array- or hash-like behavior are
-# supported as well.
-#
-# As of version 2.0.0, underlying types must implement #[], #[]=, and
-# #fetch to be supported (see the Array or Hash class documentation).
-# They must also implement #push if you want to use push mode (index ":[]").
+# As of version 2.0.0, any underlying type implementing #[], #[]= (if
+# setting), #fetch, and #push (if using push mode) is supported. (See the
+# Array documentation.)
 #
 # As of version 2.1.0, #[] is used if #fetch is not supported. Missing-key
 # detection (still) depends on KeyError or IndexError being raised.
 #
-# Version 2.1.0 2014-05-06
+# Version 2.2.0 2014-05-07
 #
 # @author Brian Katzung <briank@kappacs.com>, Kappa Computer Solutions, LLC
 # @copyright 2013-2014 Brian Katzung and Kappa Computer Solutions, LLC
@@ -141,6 +138,11 @@ module XKeys::Set_
     # push mode has not been disabled (see below), a new node will be
     # pushed onto the end of the current node.
     #
+    # If the root of the tree responds to the #xkeys_on_final method, it
+    # will be called as follows before the (final leaf) assignment:
+    #
+    #  xkeys_on_final(leaf_node, key, value, option_hash)
+    #
     # Options:
     #
     #  :[] => false
@@ -153,6 +155,8 @@ module XKeys::Set_
 	push_mode = options[:[]] != false
 
 	if args.count + last == 0
+	    xkeys_on_final self, args[0], args[-1], options if
+	      respond_to? :xkeys_on_final
 	    if args[0] == :[] && push_mode && respond_to?(:push)
 		push args[-1]		# array[:[]] = value
 		true			# done--don't caller-super
@@ -180,6 +184,8 @@ module XKeys::Set_
 	    end
 
 	    # Assign (or push) according to the final key.
+	    xkeys_on_final node, args[0], args[-1], options if
+	      respond_to? :xkeys_on_final
 	    if key == :[] && push_mode && node.respond_to?(:push)
 		node.push args[-1]
 	    else
